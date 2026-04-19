@@ -37,12 +37,14 @@ No other Phase 1 endpoints are part of this contract.
 - Timestamps: RFC3339 UTC date-time string
 - `schema_version`: must be `"v0"`
 - IDs are immutable once accepted
+- Entity IDs are globally unique per entity kind (`run_id`, `span_id`, `event_id`, `error_id`, `usage_id`) across all runs
 - Ingest writes are atomic per request
   - Any validation/conflict error means no writes from that request are committed
 
 ## Ingestion Limits (Frozen)
 
 - Max request payload size: `524288` bytes (512 KiB)
+  - Enforced at transport layer and validated again during ingest handling
 - Max traces per ingest request (`traces.length`): `32`
 - Max total entities per request:
   - `sum(1 + spans + events + errors + usage over all traces) <= 5000`

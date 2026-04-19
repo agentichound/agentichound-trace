@@ -49,8 +49,7 @@ impl Storage {
     }
 
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, StorageError> {
-        let conn =
-            Connection::open(path).map_err(|e| StorageError::Sqlite(e.to_string()))?;
+        let conn = Connection::open(path).map_err(|e| StorageError::Sqlite(e.to_string()))?;
         let mut storage = Self { conn };
         storage.init()?;
         Ok(storage)
@@ -87,8 +86,11 @@ CREATE TABLE IF NOT EXISTS runs (
   estimated_cost_usd REAL NOT NULL,
   last_ingested_at TEXT NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_runs_started_at_run_id
+  ON runs(started_at DESC, run_id ASC);
 
 CREATE TABLE IF NOT EXISTS entity_runs (
+  -- Entity IDs are globally unique per entity kind across all runs.
   id TEXT PRIMARY KEY,
   canonical_payload TEXT NOT NULL
 );
@@ -337,11 +339,7 @@ CREATE TABLE IF NOT EXISTS schema_meta (
         ))
     }
 
-    pub fn list_runs(
-        &self,
-        limit: usize,
-        offset: usize,
-    ) -> Result<RunsResponse, StorageError> {
+    pub fn list_runs(&self, limit: usize, offset: usize) -> Result<RunsResponse, StorageError> {
         let mut stmt = self
             .conn
             .prepare(
@@ -355,7 +353,10 @@ CREATE TABLE IF NOT EXISTS schema_meta (
             .query(params![limit as i64, offset as i64])
             .map_err(|e| StorageError::Sqlite(e.to_string()))?;
         let mut out = Vec::new();
-        while let Some(r) = rows.next().map_err(|e| StorageError::Sqlite(e.to_string()))? {
+        while let Some(r) = rows
+            .next()
+            .map_err(|e| StorageError::Sqlite(e.to_string()))?
+        {
             out.push(RunSummary {
                 run_id: r.get(0).map_err(|e| StorageError::Sqlite(e.to_string()))?,
                 status: serde_json::from_str(&format!(
@@ -367,13 +368,21 @@ CREATE TABLE IF NOT EXISTS schema_meta (
                 started_at: r.get(2).map_err(|e| StorageError::Sqlite(e.to_string()))?,
                 ended_at: r.get(3).map_err(|e| StorageError::Sqlite(e.to_string()))?,
                 duration_ms: r.get(4).map_err(|e| StorageError::Sqlite(e.to_string()))?,
-                span_count: r.get::<_, i64>(5).map_err(|e| StorageError::Sqlite(e.to_string()))?
+                span_count: r
+                    .get::<_, i64>(5)
+                    .map_err(|e| StorageError::Sqlite(e.to_string()))?
                     as usize,
-                event_count: r.get::<_, i64>(6).map_err(|e| StorageError::Sqlite(e.to_string()))?
+                event_count: r
+                    .get::<_, i64>(6)
+                    .map_err(|e| StorageError::Sqlite(e.to_string()))?
                     as usize,
-                error_count: r.get::<_, i64>(7).map_err(|e| StorageError::Sqlite(e.to_string()))?
+                error_count: r
+                    .get::<_, i64>(7)
+                    .map_err(|e| StorageError::Sqlite(e.to_string()))?
                     as usize,
-                usage_count: r.get::<_, i64>(8).map_err(|e| StorageError::Sqlite(e.to_string()))?
+                usage_count: r
+                    .get::<_, i64>(8)
+                    .map_err(|e| StorageError::Sqlite(e.to_string()))?
                     as usize,
                 total_tokens: r.get(9).map_err(|e| StorageError::Sqlite(e.to_string()))?,
                 estimated_cost_usd: r.get(10).map_err(|e| StorageError::Sqlite(e.to_string()))?,
@@ -410,8 +419,8 @@ CREATE TABLE IF NOT EXISTS schema_meta (
         let Some((trace_json, ingested_at)) = row else {
             return Ok(None);
         };
-        let trace: TraceDocument =
-            serde_json::from_str(&trace_json).map_err(|e| StorageError::Deserialize(e.to_string()))?;
+        let trace: TraceDocument = serde_json::from_str(&trace_json)
+            .map_err(|e| StorageError::Deserialize(e.to_string()))?;
         Ok(Some(RunDetailResponse {
             trace,
             meta: RunDetailMeta {
@@ -423,9 +432,11 @@ CREATE TABLE IF NOT EXISTS schema_meta (
 }
 
 fn receive_counts(req: &IngestRequest) -> EntityCounts {
-    let mut counts = EntityCounts::default();
-    counts.traces = req.traces.len();
-    counts.runs = req.traces.len();
+    let mut counts = EntityCounts {
+        traces: req.traces.len(),
+        runs: req.traces.len(),
+        ..EntityCounts::default()
+    };
     for trace in &req.traces {
         counts.spans += trace.spans.len();
         counts.events += trace.events.len();
@@ -468,7 +479,11 @@ fn track_entity(
     Ok(())
 }
 
-fn upsert_run(tx: &Transaction<'_>, trace: &TraceDocument, sent_at: &str) -> Result<(), StorageError> {
+fn upsert_run(
+    tx: &Transaction<'_>,
+    trace: &TraceDocument,
+    sent_at: &str,
+) -> Result<(), StorageError> {
     let trace_json =
         serde_json::to_string(trace).map_err(|e| StorageError::Serialize(e.to_string()))?;
     let trace_canonical =

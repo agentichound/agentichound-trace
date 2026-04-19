@@ -174,8 +174,10 @@ async fn duplicate_entity_different_payload_across_batches_is_entity_conflict() 
     second_json["batch_id"] = Value::String("bat_20260419_0003".to_string());
     second_json["traces"][0]["spans"][0]["duration_ms"] = Value::from(1500);
     second_json["traces"][0]["run"]["duration_ms"] = Value::from(1500);
-    second_json["traces"][0]["run"]["ended_at"] = Value::String("2026-04-20T02:01:01.500Z".to_string());
-    second_json["traces"][0]["spans"][0]["ended_at"] = Value::String("2026-04-20T02:01:01.500Z".to_string());
+    second_json["traces"][0]["run"]["ended_at"] =
+        Value::String("2026-04-20T02:01:01.500Z".to_string());
+    second_json["traces"][0]["spans"][0]["ended_at"] =
+        Value::String("2026-04-20T02:01:01.500Z".to_string());
     let second_body = serde_json::to_string(&second_json).expect("json");
 
     let second = router
