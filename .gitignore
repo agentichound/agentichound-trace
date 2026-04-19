@@ -8,3 +8,6 @@
 
 # Local agent state
 .nyex/
+
+# Local collector DB (SQLite)
+collector/*.db*

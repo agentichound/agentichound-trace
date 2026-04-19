@@ -93,3 +93,11 @@ More detail:
 - [Persistence](docs/persistence.md)
 - [Trace schema v0](docs/trace-schema-v0.md)
 - [Collector contract v0](docs/collector-contract.md)
+
+## Integration implementation templates
+
+These templates guide controlled integration work and are not part of frozen schema/contract definitions.
+
+Hard rule for integrations: preserve runtime truth. Do not invent semantic fields that are not present in the source runtime trace.
+
+- [NYEX integration prompt template](docs/integrations/nyex-integration-prompt-template.md)
