@@ -4,7 +4,8 @@ pub mod types;
 mod validate;
 
 use axum::body::Bytes;
-use axum::extract::{Path, Query, State};
+use axum::extract::rejection::BytesRejection;
+use axum::extract::{DefaultBodyLimit, Path, Query, State};
 use axum::http::{header, HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
@@ -16,7 +17,7 @@ use std::path::{Path as FsPath, PathBuf};
 use std::sync::{Arc, Mutex};
 use storage::{Storage, StorageError};
 use types::{
-    ErrorDetail, ErrorResponse, IngestRequest, MAX_PAYLOAD_BYTES, RunDetailResponse, RunsResponse,
+    ErrorDetail, ErrorResponse, IngestRequest, RunDetailResponse, RunsResponse, MAX_PAYLOAD_BYTES,
 };
 use validate::{validate_request_limits, validate_trace};
 
@@ -52,11 +53,18 @@ impl AppState {
     }
 }
 
+impl Default for AppState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub fn app(state: AppState) -> Router {
     Router::new()
         .route("/v0/ingest", post(post_ingest))
         .route("/v0/runs", get(get_runs))
         .route("/v0/runs/:run_id", get(get_run_by_id))
+        .layer(DefaultBodyLimit::max(MAX_PAYLOAD_BYTES))
         .with_state(state)
 }
 
@@ -110,9 +118,11 @@ impl From<StorageError> for ApiError {
             StorageError::EntityConflict(_) => {
                 ApiError::new(StatusCode::CONFLICT, "ENTITY_CONFLICT", value.to_string())
             }
-            StorageError::SchemaVersionMismatch { .. } => {
-                ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", value.to_string())
-            }
+            StorageError::SchemaVersionMismatch { .. } => ApiError::new(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "INTERNAL_ERROR",
+                value.to_string(),
+            ),
             StorageError::Sqlite(msg) => {
                 ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", msg)
             }
@@ -179,9 +189,24 @@ fn decode_ingest_request(body: &[u8]) -> Result<(IngestRequest, String), ApiErro
 async fn post_ingest(
     State(state): State<AppState>,
     headers: HeaderMap,
-    body: Bytes,
+    body: Result<Bytes, BytesRejection>,
 ) -> Result<impl IntoResponse, ApiError> {
     require_json_content_type(&headers)?;
+    let body = body.map_err(|rejection| {
+        if rejection.status() == StatusCode::PAYLOAD_TOO_LARGE {
+            ApiError::new(
+                StatusCode::PAYLOAD_TOO_LARGE,
+                "PAYLOAD_TOO_LARGE",
+                "request payload exceeds max payload size",
+            )
+        } else {
+            ApiError::new(
+                StatusCode::BAD_REQUEST,
+                "MALFORMED_JSON",
+                "request body is not valid JSON",
+            )
+        }
+    })?;
     if body.len() > MAX_PAYLOAD_BYTES {
         return Err(ApiError::new(
             StatusCode::PAYLOAD_TOO_LARGE,
@@ -200,10 +225,13 @@ async fn post_ingest(
                 .with_detail(format!("traces[{i}]"), "trace validation")
         })?;
     }
-    let mut storage = state
-        .storage
-        .lock()
-        .map_err(|_| ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "store lock poisoned"))?;
+    let mut storage = state.storage.lock().map_err(|_| {
+        ApiError::new(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "INTERNAL_ERROR",
+            "store lock poisoned",
+        )
+    })?;
     // Idempotency/conflict comparisons use deterministic canonical JSON, not raw input bytes.
     let (status, response) = storage.ingest(&req, &body_canonical)?;
     let status_code = StatusCode::from_u16(status).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
@@ -243,10 +271,13 @@ async fn get_runs(
             )
         })?,
     };
-    let storage = state
-        .storage
-        .lock()
-        .map_err(|_| ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "store lock poisoned"))?;
+    let storage = state.storage.lock().map_err(|_| {
+        ApiError::new(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "INTERNAL_ERROR",
+            "store lock poisoned",
+        )
+    })?;
     let response: RunsResponse = storage.list_runs(limit, offset)?;
     Ok((StatusCode::OK, Json(response)))
 }
@@ -255,10 +286,13 @@ async fn get_run_by_id(
     State(state): State<AppState>,
     Path(run_id): Path<String>,
 ) -> Result<impl IntoResponse, ApiError> {
-    let storage = state
-        .storage
-        .lock()
-        .map_err(|_| ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "store lock poisoned"))?;
+    let storage = state.storage.lock().map_err(|_| {
+        ApiError::new(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "INTERNAL_ERROR",
+            "store lock poisoned",
+        )
+    })?;
     let maybe: Option<RunDetailResponse> = storage.get_run(&run_id)?;
     let Some(response) = maybe else {
         return Err(ApiError::new(
