@@ -13,7 +13,7 @@ This document defines Phase 1 SDK design constraints across Rust and TypeScript.
 
 ## Rust SDK (`sdk/rust`)
 
-- First-class API surface for NYEX and Rust orchestration runtimes
+- First-class API surface for Rust and any agent orchestration runtime
 - Current seed files: `src/lib.rs`, `src/trace.rs`
 - Tests live in `tests/`
 

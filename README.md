@@ -2,7 +2,7 @@
 
 Open-source runtime tracing and bottleneck profiling for agent systems, tool calls, and execution paths.
 
-AgenticHound Trace is runtime truth for agent systems.
+AgenticHound Trace is runtime truth and diagnostics for agent systems.
 
 It exists to show where agents lose time, cost, and reliability across model calls, tool calls, retries, failures, orchestration steps, and execution bottlenecks.
 
@@ -44,7 +44,7 @@ What is not in scope yet:
 
 - Auth, multi-tenant behavior, streaming ingest
 - UI
-- NYEX integration
+- Reference integrations beyond the documented example
 
 ## Non-goals (Phase 1)
 
@@ -94,10 +94,11 @@ More detail:
 - [Trace schema v0](docs/trace-schema-v0.md)
 - [Collector contract v0](docs/collector-contract.md)
 
-## Integration implementation templates
+## Integration templates
 
 These templates guide controlled integration work and are not part of frozen schema/contract definitions.
 
 Hard rule for integrations: preserve runtime truth. Do not invent semantic fields that are not present in the source runtime trace.
 
-- [NYEX integration prompt template](docs/integrations/nyex-integration-prompt-template.md)
+- [Integration guide](docs/integrations/README.md)
+- [NYEX reference integration prompt template](docs/integrations/nyex/integration-prompt-template.md)

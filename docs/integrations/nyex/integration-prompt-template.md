@@ -2,7 +2,7 @@
 
 Use this prompt when asking an agent (ChatGPT/NYEX/Codex) to implement or extend NYEX tracing into AgenticHound.
 
-This is an implementation workflow template for controlled integration work. It is not part of frozen schema or collector contract definitions.
+This is a reference integration workflow template for controlled integration work. It is not part of frozen schema or collector contract definitions.
 
 ## Prompt
 
@@ -92,4 +92,3 @@ Additional acceptance criteria:
 - NYEX trace source of truth is orchestration trace (`OrchestrationTraceRecord`).
 - Prefer mapping from existing fields (routing decisions, attempts, tool invocations, validator result).
 - Do not fabricate semantic fields that are not present in runtime trace.
-

@@ -1,6 +1,6 @@
 # Rust Emit E2E Demo
 
-This example proves the first Rust emit path against a local collector without NYEX integration.
+This example proves the first Rust emit path against a local collector without requiring a NYEX-specific runtime.
 
 ## Run
 

@@ -29,5 +29,5 @@
 - Auth and multi-tenant behavior
 - Enterprise governance features
 - Streaming ingestion
-- NYEX integration
+- Reference integration: NYEX
 - Gateway/control-plane features

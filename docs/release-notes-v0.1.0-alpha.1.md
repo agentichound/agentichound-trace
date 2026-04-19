@@ -18,6 +18,6 @@ What this release is for:
 Out of scope in this preview:
 - Auth, multi-tenant behavior, streaming ingest
 - UI
-- NYEX integration
+- NYEX reference integration only
 
 Phase 1 rule remains unchanged: Trace first, Gateway later.
