@@ -1,0 +1,13 @@
+{
+  "schema_version": "v0",
+  "run": {
+    "started_at": "2026-04-19T18:00:00Z",
+    "ended_at": "2026-04-19T18:00:01Z",
+    "duration_ms": 1000,
+    "status": "ok"
+  },
+  "spans": [],
+  "events": [],
+  "errors": [],
+  "usage": []
+}

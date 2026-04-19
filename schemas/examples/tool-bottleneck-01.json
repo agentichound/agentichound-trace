@@ -1,0 +1,107 @@
+{
+  "schema_version": "v0",
+  "run": {
+    "run_id": "run_tb_1",
+    "started_at": "2026-04-20T02:01:00.000Z",
+    "ended_at": "2026-04-20T02:01:02.400Z",
+    "duration_ms": 2400,
+    "status": "ok"
+  },
+  "spans": [
+    {
+      "span_id": "spn_tb_1_root",
+      "run_id": "run_tb_1",
+      "parent_span_id": null,
+      "retry_of_span_id": null,
+      "kind": "orchestration",
+      "name": "agent.execute",
+      "started_at": "2026-04-20T02:01:00.000Z",
+      "ended_at": "2026-04-20T02:01:02.400Z",
+      "duration_ms": 2400,
+      "status": "ok"
+    },
+    {
+      "span_id": "spn_tb_1_model",
+      "run_id": "run_tb_1",
+      "parent_span_id": "spn_tb_1_root",
+      "retry_of_span_id": null,
+      "kind": "model",
+      "name": "model.plan",
+      "started_at": "2026-04-20T02:01:00.100Z",
+      "ended_at": "2026-04-20T02:01:00.450Z",
+      "duration_ms": 350,
+      "status": "ok"
+    },
+    {
+      "span_id": "spn_tb_1_tool",
+      "run_id": "run_tb_1",
+      "parent_span_id": "spn_tb_1_root",
+      "retry_of_span_id": null,
+      "kind": "tool",
+      "name": "tool.fetch",
+      "started_at": "2026-04-20T02:01:00.500Z",
+      "ended_at": "2026-04-20T02:01:02.200Z",
+      "duration_ms": 1700,
+      "status": "ok"
+    }
+  ],
+  "events": [
+    {
+      "event_id": "evt_tb_1_start",
+      "run_id": "run_tb_1",
+      "span_id": "spn_tb_1_root",
+      "kind": "orchestration",
+      "ts": "2026-04-20T02:01:00.000Z",
+      "payload": {
+        "phase": "start"
+      }
+    },
+    {
+      "event_id": "evt_tb_1_model",
+      "run_id": "run_tb_1",
+      "span_id": "spn_tb_1_model",
+      "kind": "model",
+      "ts": "2026-04-20T02:01:00.200Z",
+      "payload": {
+        "provider": "openai",
+        "model": "gpt-4.1-mini"
+      }
+    },
+    {
+      "event_id": "evt_tb_1_tool",
+      "run_id": "run_tb_1",
+      "span_id": "spn_tb_1_tool",
+      "kind": "tool",
+      "ts": "2026-04-20T02:01:00.700Z",
+      "payload": {
+        "tool": "fetch",
+        "endpoint": "inventory"
+      }
+    }
+  ],
+  "errors": [],
+  "usage": [
+    {
+      "usage_id": "use_tb_1_model",
+      "run_id": "run_tb_1",
+      "span_id": "spn_tb_1_model",
+      "kind": "model",
+      "prompt_tokens": 120,
+      "completion_tokens": 80,
+      "total_tokens": 200,
+      "estimated_cost_usd": 0.0024,
+      "currency": "USD"
+    },
+    {
+      "usage_id": "use_tb_1_tool",
+      "run_id": "run_tb_1",
+      "span_id": "spn_tb_1_tool",
+      "kind": "tool",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "estimated_cost_usd": 0.0011,
+      "currency": "USD"
+    }
+  ]
+}
