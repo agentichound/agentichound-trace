@@ -1,0 +1,107 @@
+{
+  "schema_version": "v0",
+  "run": {
+    "run_id": "run_happy_5",
+    "started_at": "2026-04-20T02:05:00.000Z",
+    "ended_at": "2026-04-20T02:05:01.400Z",
+    "duration_ms": 1400,
+    "status": "ok"
+  },
+  "spans": [
+    {
+      "span_id": "spn_happy_5_root",
+      "run_id": "run_happy_5",
+      "parent_span_id": null,
+      "retry_of_span_id": null,
+      "kind": "orchestration",
+      "name": "agent.execute",
+      "started_at": "2026-04-20T02:05:00.000Z",
+      "ended_at": "2026-04-20T02:05:01.400Z",
+      "duration_ms": 1400,
+      "status": "ok"
+    },
+    {
+      "span_id": "spn_happy_5_model",
+      "run_id": "run_happy_5",
+      "parent_span_id": "spn_happy_5_root",
+      "retry_of_span_id": null,
+      "kind": "model",
+      "name": "model.plan",
+      "started_at": "2026-04-20T02:05:00.100Z",
+      "ended_at": "2026-04-20T02:05:00.450Z",
+      "duration_ms": 350,
+      "status": "ok"
+    },
+    {
+      "span_id": "spn_happy_5_tool",
+      "run_id": "run_happy_5",
+      "parent_span_id": "spn_happy_5_root",
+      "retry_of_span_id": null,
+      "kind": "tool",
+      "name": "tool.fetch",
+      "started_at": "2026-04-20T02:05:00.500Z",
+      "ended_at": "2026-04-20T02:05:01.100Z",
+      "duration_ms": 600,
+      "status": "ok"
+    }
+  ],
+  "events": [
+    {
+      "event_id": "evt_happy_5_start",
+      "run_id": "run_happy_5",
+      "span_id": "spn_happy_5_root",
+      "kind": "orchestration",
+      "ts": "2026-04-20T02:05:00.000Z",
+      "payload": {
+        "phase": "start"
+      }
+    },
+    {
+      "event_id": "evt_happy_5_model",
+      "run_id": "run_happy_5",
+      "span_id": "spn_happy_5_model",
+      "kind": "model",
+      "ts": "2026-04-20T02:05:00.200Z",
+      "payload": {
+        "provider": "openai",
+        "model": "gpt-4.1-mini"
+      }
+    },
+    {
+      "event_id": "evt_happy_5_tool",
+      "run_id": "run_happy_5",
+      "span_id": "spn_happy_5_tool",
+      "kind": "tool",
+      "ts": "2026-04-20T02:05:00.700Z",
+      "payload": {
+        "tool": "fetch",
+        "endpoint": "inventory"
+      }
+    }
+  ],
+  "errors": [],
+  "usage": [
+    {
+      "usage_id": "use_happy_5_model",
+      "run_id": "run_happy_5",
+      "span_id": "spn_happy_5_model",
+      "kind": "model",
+      "prompt_tokens": 120,
+      "completion_tokens": 80,
+      "total_tokens": 200,
+      "estimated_cost_usd": 0.0024,
+      "currency": "USD"
+    },
+    {
+      "usage_id": "use_happy_5_tool",
+      "run_id": "run_happy_5",
+      "span_id": "spn_happy_5_tool",
+      "kind": "tool",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "estimated_cost_usd": 0.0004,
+      "currency": "USD"
+    }
+  ]
+}
