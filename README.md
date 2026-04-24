@@ -6,6 +6,41 @@ AgenticHound Trace is runtime truth and diagnostics for agent systems.
 
 It exists to show where agents lose time, cost, and reliability across model calls, tool calls, retries, failures, orchestration steps, and execution bottlenecks.
 
+## Quick Diagnostic Demo
+
+Run a collector, ingest a trace, then diagnose it:
+
+```powershell
+cargo run --manifest-path collector/Cargo.toml
+curl -X POST http://127.0.0.1:3000/v0/ingest -H "Content-Type: application/json" --data-binary "@collector/fixtures/ingest-pcd.json"
+cargo run --manifest-path cli/Cargo.toml --bin agentichound -- diagnose --collector-url http://127.0.0.1:3000 --run-id run_pcd_1
+```
+
+Example output:
+
+```text
+severity: critical
+summary: Run strongly resembles progress collapse with repeated work and limited progress.
+```
+
+Full flow: [docs/quickstart-diagnostics.md](docs/quickstart-diagnostics.md)
+
+## Why this is different from a generic trace tree
+
+A generic trace tree shows what happened.
+
+AgenticHound shows when a run is stuck, looping, retry-heavy, or making little progress despite lots of activity.
+
+Generic trace:
+
+`9 spans executed`
+
+AgenticHound:
+
+`critical: retry-heavy run with limited forward progress`
+
+This is runtime truth first: the diagnostic only uses fields already present in the trace.
+
 ## Phase 1 Priority
 
 1. Rust
@@ -90,6 +125,7 @@ curl -i "http://127.0.0.1:3000/v0/runs/run_happy_1"
 More detail:
 
 - [Collector quickstart](docs/collector-quickstart.md)
+- [Quick diagnostic demo](docs/quickstart-diagnostics.md)
 - [Persistence](docs/persistence.md)
 - [Trace schema v0](docs/trace-schema-v0.md)
 - [Collector contract v0](docs/collector-contract.md)

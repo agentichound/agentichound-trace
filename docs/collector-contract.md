@@ -142,6 +142,7 @@ For `201 Created` (new ingest):
     "usage": 2
   },
   "inserted": {
+    "traces": 0,
     "runs": 1,
     "spans": 3,
     "events": 3,
@@ -149,6 +150,7 @@ For `201 Created` (new ingest):
     "usage": 2
   },
   "duplicates_ignored": {
+    "traces": 0,
     "runs": 0,
     "spans": 0,
     "events": 0,

@@ -1,0 +1,204 @@
+{
+  "batch_id": "bat_pcd_0001",
+  "sent_at": "2026-04-20T03:05:00.000Z",
+  "traces": [
+    {
+      "schema_version": "v0",
+      "run": {
+        "run_id": "run_pcd_1",
+        "started_at": "2026-04-20T03:00:00.000Z",
+        "ended_at": "2026-04-20T03:00:32.000Z",
+        "duration_ms": 32000,
+        "status": "error"
+      },
+      "spans": [
+        {
+          "span_id": "spn_pcd_1_root",
+          "run_id": "run_pcd_1",
+          "parent_span_id": null,
+          "retry_of_span_id": null,
+          "kind": "orchestration",
+          "name": "agent.execute",
+          "started_at": "2026-04-20T03:00:00.000Z",
+          "ended_at": "2026-04-20T03:00:32.000Z",
+          "duration_ms": 32000,
+          "status": "error"
+        },
+        {
+          "span_id": "spn_pcd_1_model_1",
+          "run_id": "run_pcd_1",
+          "parent_span_id": "spn_pcd_1_root",
+          "retry_of_span_id": null,
+          "kind": "model",
+          "name": "model.plan",
+          "started_at": "2026-04-20T03:00:00.100Z",
+          "ended_at": "2026-04-20T03:00:01.500Z",
+          "duration_ms": 1400,
+          "status": "ok"
+        },
+        {
+          "span_id": "spn_pcd_1_retry_1",
+          "run_id": "run_pcd_1",
+          "parent_span_id": "spn_pcd_1_model_1",
+          "retry_of_span_id": "spn_pcd_1_model_1",
+          "kind": "retry",
+          "name": "retry.model.plan",
+          "started_at": "2026-04-20T03:00:01.600Z",
+          "ended_at": "2026-04-20T03:00:02.500Z",
+          "duration_ms": 900,
+          "status": "error"
+        },
+        {
+          "span_id": "spn_pcd_1_model_2",
+          "run_id": "run_pcd_1",
+          "parent_span_id": "spn_pcd_1_root",
+          "retry_of_span_id": null,
+          "kind": "model",
+          "name": "model.plan",
+          "started_at": "2026-04-20T03:00:02.600Z",
+          "ended_at": "2026-04-20T03:00:04.200Z",
+          "duration_ms": 1600,
+          "status": "error"
+        },
+        {
+          "span_id": "spn_pcd_1_retry_2",
+          "run_id": "run_pcd_1",
+          "parent_span_id": "spn_pcd_1_model_2",
+          "retry_of_span_id": "spn_pcd_1_model_2",
+          "kind": "retry",
+          "name": "retry.model.plan",
+          "started_at": "2026-04-20T03:00:04.300Z",
+          "ended_at": "2026-04-20T03:00:06.000Z",
+          "duration_ms": 1700,
+          "status": "error"
+        },
+        {
+          "span_id": "spn_pcd_1_tool_1",
+          "run_id": "run_pcd_1",
+          "parent_span_id": "spn_pcd_1_root",
+          "retry_of_span_id": null,
+          "kind": "tool",
+          "name": "tool.fetch",
+          "started_at": "2026-04-20T03:00:06.100Z",
+          "ended_at": "2026-04-20T03:00:08.400Z",
+          "duration_ms": 2300,
+          "status": "error"
+        },
+        {
+          "span_id": "spn_pcd_1_retry_3",
+          "run_id": "run_pcd_1",
+          "parent_span_id": "spn_pcd_1_tool_1",
+          "retry_of_span_id": "spn_pcd_1_tool_1",
+          "kind": "retry",
+          "name": "retry.tool.fetch",
+          "started_at": "2026-04-20T03:00:08.500Z",
+          "ended_at": "2026-04-20T03:00:10.700Z",
+          "duration_ms": 2200,
+          "status": "error"
+        },
+        {
+          "span_id": "spn_pcd_1_model_3",
+          "run_id": "run_pcd_1",
+          "parent_span_id": "spn_pcd_1_root",
+          "retry_of_span_id": null,
+          "kind": "model",
+          "name": "model.plan",
+          "started_at": "2026-04-20T03:00:10.800Z",
+          "ended_at": "2026-04-20T03:00:12.000Z",
+          "duration_ms": 1200,
+          "status": "ok"
+        },
+        {
+          "span_id": "spn_pcd_1_retry_4",
+          "run_id": "run_pcd_1",
+          "parent_span_id": "spn_pcd_1_model_3",
+          "retry_of_span_id": "spn_pcd_1_model_3",
+          "kind": "retry",
+          "name": "retry.model.plan",
+          "started_at": "2026-04-20T03:00:12.100Z",
+          "ended_at": "2026-04-20T03:00:15.000Z",
+          "duration_ms": 2900,
+          "status": "error"
+        }
+      ],
+      "events": [
+        {
+          "event_id": "evt_pcd_1_start",
+          "run_id": "run_pcd_1",
+          "span_id": "spn_pcd_1_root",
+          "kind": "orchestration",
+          "ts": "2026-04-20T03:00:00.000Z",
+          "payload": {
+            "phase": "start"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "error_id": "err_pcd_1_model",
+          "run_id": "run_pcd_1",
+          "span_id": "spn_pcd_1_model_2",
+          "ts": "2026-04-20T03:00:04.100Z",
+          "code": "MODEL_TIMEOUT",
+          "message": "Model step timed out",
+          "retryable": true
+        },
+        {
+          "error_id": "err_pcd_1_tool",
+          "run_id": "run_pcd_1",
+          "span_id": "spn_pcd_1_tool_1",
+          "ts": "2026-04-20T03:00:08.300Z",
+          "code": "TOOL_TIMEOUT",
+          "message": "Tool step timed out",
+          "retryable": true
+        }
+      ],
+      "usage": [
+        {
+          "usage_id": "use_pcd_1_model_1",
+          "run_id": "run_pcd_1",
+          "span_id": "spn_pcd_1_model_1",
+          "kind": "model",
+          "prompt_tokens": 500,
+          "completion_tokens": 300,
+          "total_tokens": 800,
+          "estimated_cost_usd": 0.004,
+          "currency": "USD"
+        },
+        {
+          "usage_id": "use_pcd_1_model_2",
+          "run_id": "run_pcd_1",
+          "span_id": "spn_pcd_1_model_2",
+          "kind": "model",
+          "prompt_tokens": 600,
+          "completion_tokens": 400,
+          "total_tokens": 1000,
+          "estimated_cost_usd": 0.005,
+          "currency": "USD"
+        },
+        {
+          "usage_id": "use_pcd_1_tool_1",
+          "run_id": "run_pcd_1",
+          "span_id": "spn_pcd_1_tool_1",
+          "kind": "tool",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "estimated_cost_usd": 0.001,
+          "currency": "USD"
+        },
+        {
+          "usage_id": "use_pcd_1_model_3",
+          "run_id": "run_pcd_1",
+          "span_id": "spn_pcd_1_model_3",
+          "kind": "model",
+          "prompt_tokens": 700,
+          "completion_tokens": 500,
+          "total_tokens": 1200,
+          "estimated_cost_usd": 0.006,
+          "currency": "USD"
+        }
+      ]
+    }
+  ]
+}

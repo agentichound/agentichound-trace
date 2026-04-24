@@ -1,0 +1,16 @@
+[package]
+name = "agentichound-cli"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "CLI for AgenticHound Trace diagnostics"
+publish = false
+
+[[bin]]
+name = "agentichound"
+path = "src/main.rs"
+
+[dependencies]
+agentichound_trace = { package = "agentichound-trace", path = "../sdk/rust" }
+serde_json = "1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
