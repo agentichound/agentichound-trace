@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AgenticHound Trace Viewer</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #141b2d;
+      --panel-2: #1b2640;
+      --text: #d9e2ff;
+      --muted: #94a3c5;
+      --accent: #4dd4ac;
+      --low: #4caf50;
+      --med: #f59f00;
+      --high: #f76707;
+      --critical: #e03131;
+      --border: #2b3b63;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background: linear-gradient(160deg, #0a0f1c 0%, #111931 55%, #0a1020 100%);
+    }
+
+    header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      background: rgba(10, 15, 28, 0.92);
+      backdrop-filter: blur(4px);
+      z-index: 10;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .title p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 7px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    button:hover { filter: brightness(1.1); }
+    button.primary {
+      border-color: #2f8066;
+      background: #195340;
+      color: #dcfff3;
+    }
+
+    .status-pill {
+      border: 1px solid var(--border);
+      background: #0f172b;
+      color: var(--muted);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      min-height: calc(100vh - 72px);
+    }
+
+    aside {
+      border-right: 1px solid var(--border);
+      background: rgba(20, 27, 45, 0.8);
+      overflow-y: auto;
+    }
+
+    main {
+      padding: 14px;
+      overflow-y: auto;
+    }
+
+    .run-list {
+      list-style: none;
+      padding: 10px;
+      margin: 0;
+    }
+
+    .run-item {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #10182b;
+      cursor: pointer;
+    }
+
+    .run-item.active {
+      border-color: #4b66a6;
+      background: #16213a;
+    }
+
+    .run-id {
+      font-family: Consolas, Monaco, monospace;
+      font-size: 12px;
+      color: #dce6ff;
+      margin-bottom: 8px;
+      word-break: break-word;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: lowercase;
+      border: 1px solid transparent;
+    }
+
+    .severity-low { color: #d8ffe0; background: rgba(76, 175, 80, 0.2); border-color: rgba(76, 175, 80, 0.4); }
+    .severity-medium { color: #fff6de; background: rgba(245, 159, 0, 0.2); border-color: rgba(245, 159, 0, 0.4); }
+    .severity-high { color: #ffe8dc; background: rgba(247, 103, 7, 0.2); border-color: rgba(247, 103, 7, 0.4); }
+    .severity-critical { color: #ffe1e1; background: rgba(224, 49, 49, 0.2); border-color: rgba(224, 49, 49, 0.4); }
+    .severity-unknown { color: #d3ddff; background: rgba(68, 98, 175, 0.2); border-color: rgba(68, 98, 175, 0.4); }
+
+    .panel {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #10182d;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .panel h2 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .panel h3 {
+      margin: 12px 0 8px;
+      font-size: 13px;
+      color: #cfdbff;
+    }
+
+    .signals {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .impact-flags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .impact-chip {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #d9e2ff;
+      background: #16213a;
+      text-transform: uppercase;
+      letter-spacing: 0.2px;
+    }
+
+    .impact-chip.warn {
+      color: #fff6de;
+      border-color: rgba(245, 159, 0, 0.5);
+      background: rgba(245, 159, 0, 0.16);
+    }
+
+    .impact-chip.danger {
+      color: #ffe8dc;
+      border-color: rgba(247, 103, 7, 0.5);
+      background: rgba(247, 103, 7, 0.16);
+    }
+
+    .impact-chip.critical {
+      color: #ffe1e1;
+      border-color: rgba(224, 49, 49, 0.5);
+      background: rgba(224, 49, 49, 0.16);
+    }
+
+    .metric-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .metric-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      background: #0f1628;
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .metric-value {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .signal {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      background: #0f1628;
+    }
+
+    .reasons {
+      margin: 0;
+      padding-left: 18px;
+      color: #c8d5fb;
+      font-size: 13px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    th, td {
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      padding: 6px;
+      vertical-align: top;
+    }
+
+    .raw-json {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: Consolas, Monaco, monospace;
+      font-size: 11px;
+      color: #cee1ff;
+      background: #0b1222;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      max-height: 260px;
+      overflow: auto;
+      display: none;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      aside {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        max-height: 45vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">
+      <h1>AgenticHound Trace</h1>
+      <p>Local Runtime Diagnostics</p>
+    </div>
+    <div class="controls">
+      <button id="refreshBtn" class="primary">Refresh</button>
+      <button id="toggleLiveBtn">Pause Live</button>
+      <span id="liveStatus" class="status-pill">Polling every 2.5s</span>
+    </div>
+  </header>
+  <div class="layout">
+    <aside>
+      <ul id="runList" class="run-list"></ul>
+    </aside>
+    <main>
+      <div id="emptyState" class="panel">
+        <h2>No run selected</h2>
+        <p class="muted">Ingest traces and select a run to inspect diagnostics and spans.</p>
+      </div>
+      <div id="runPanel" style="display:none">
+        <section class="panel">
+          <h2 id="runTitle"></h2>
+          <p id="runSummary" class="muted"></p>
+          <div id="diagnosticHeader"></div>
+          <div id="impactFlags" class="impact-flags"></div>
+          <div id="metricStrip" class="metric-strip"></div>
+          <h3>Reasons</h3>
+          <ul id="reasonList" class="reasons"></ul>
+          <h3>Supporting signals</h3>
+          <div id="signalGrid" class="signals"></div>
+        </section>
+        <section class="panel">
+          <h2>Token hot spots</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>span</th>
+                <th>prompt</th>
+                <th>completion</th>
+                <th>total</th>
+                <th>share</th>
+              </tr>
+            </thead>
+            <tbody id="usageRows"></tbody>
+          </table>
+        </section>
+        <section class="panel">
+          <h2>Spans</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>name</th>
+                <th>kind</th>
+                <th>status</th>
+                <th>duration</th>
+              </tr>
+            </thead>
+            <tbody id="spanRows"></tbody>
+          </table>
+        </section>
+        <section class="panel">
+          <button id="toggleJsonBtn">Show Raw JSON</button>
+          <pre id="rawJson" class="raw-json"></pre>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const state = {
+      runs: [],
+      selectedRunId: null,
+      polling: true,
+      timerId: null,
+      pollMs: 2500,
+      diagnosticsByRunId: new Map(),
+      runDetailsByRunId: new Map(),
+    };
+
+    const runListEl = document.getElementById("runList");
+    const emptyStateEl = document.getElementById("emptyState");
+    const runPanelEl = document.getElementById("runPanel");
+    const runTitleEl = document.getElementById("runTitle");
+    const runSummaryEl = document.getElementById("runSummary");
+    const diagnosticHeaderEl = document.getElementById("diagnosticHeader");
+    const reasonListEl = document.getElementById("reasonList");
+    const signalGridEl = document.getElementById("signalGrid");
+    const impactFlagsEl = document.getElementById("impactFlags");
+    const metricStripEl = document.getElementById("metricStrip");
+    const usageRowsEl = document.getElementById("usageRows");
+    const spanRowsEl = document.getElementById("spanRows");
+    const rawJsonEl = document.getElementById("rawJson");
+    const toggleJsonBtn = document.getElementById("toggleJsonBtn");
+    const toggleLiveBtn = document.getElementById("toggleLiveBtn");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const liveStatusEl = document.getElementById("liveStatus");
+
+    function shortRunId(runId) {
+      if (!runId) return "unknown";
+      if (runId.length <= 20) return runId;
+      return runId.slice(0, 16) + "...";
+    }
+
+    function severityClass(severity) {
+      switch ((severity || "").toLowerCase()) {
+        case "low": return "severity-low";
+        case "medium": return "severity-medium";
+        case "high": return "severity-high";
+        case "critical": return "severity-critical";
+        default: return "severity-unknown";
+      }
+    }
+
+    function severityMeaning(severity) {
+      const s = (severity || "").toLowerCase();
+      if (s === "critical") return "Critical means collapse/failure pressure is very high right now.";
+      if (s === "high") return "High means strong collapse pressure or unstable execution patterns.";
+      if (s === "medium") return "Medium means watch this run; some degradation signals are present.";
+      if (s === "low") return "Low means no major collapse pattern was detected in this run.";
+      return "Unknown means diagnostics were unavailable for this run.";
+    }
+
+    function formatNumber(value) {
+      return Number(value || 0).toLocaleString("en-US");
+    }
+
+    function buildImpactFlags(diagnostic, runDetail) {
+      const flags = [];
+      const sig = (diagnostic && diagnostic.supporting_signals) || {};
+      const reasons = (diagnostic && diagnostic.reasons) || [];
+      const totalTokens = Number(sig.total_tokens || 0);
+      const durationMs = Number(sig.duration_ms || 0);
+      const runStatus = runDetail && runDetail.trace && runDetail.trace.run ? runDetail.trace.run.status : "unknown";
+
+      if (runStatus === "error") flags.push({ text: "run error", level: "critical" });
+      if (totalTokens >= 20000 || reasons.includes("high token usage")) {
+        flags.push({ text: "token pressure", level: totalTokens >= 35000 ? "critical" : "danger" });
+      }
+      if (Number(sig.retry_ratio || 0) >= 0.35) flags.push({ text: "retry pressure", level: "danger" });
+      if (Number(sig.repeated_span_ratio || 0) >= 0.3) flags.push({ text: "repeat loop risk", level: "danger" });
+      if (durationMs >= 15000) flags.push({ text: "slow run", level: "warn" });
+      if (flags.length === 0) flags.push({ text: "stable run", level: "warn" });
+      return flags;
+    }
+
+    function renderImpactFlags(flags) {
+      impactFlagsEl.innerHTML = flags.map((f) => (
+        '<span class="impact-chip ' + f.level + '">' + f.text + "</span>"
+      )).join("");
+    }
+
+    function renderMetricStrip(diagnostic) {
+      const sig = (diagnostic && diagnostic.supporting_signals) || {};
+      const entries = [
+        ["Total tokens", formatNumber(sig.total_tokens)],
+        ["Duration", formatNumber(sig.duration_ms) + " ms"],
+        ["Retries", formatNumber(sig.retry_span_count)],
+        ["Errors", formatNumber(sig.error_count)],
+      ];
+      metricStripEl.innerHTML = entries.map(([k, v]) => (
+        '<div class="metric-card"><span class="metric-label">' + k + '</span><span class="metric-value">' + v + "</span></div>"
+      )).join("");
+    }
+
+    async function fetchJson(url) {
+      const resp = await fetch(url, { cache: "no-store" });
+      if (!resp.ok) {
+        throw new Error("request failed: " + resp.status + " " + resp.statusText + " (" + url + ")");
+      }
+      return resp.json();
+    }
+
+    async function loadRuns() {
+      const runsResp = await fetchJson("/v0/runs?limit=25");
+      state.runs = runsResp.runs || [];
+
+      const diagPromises = state.runs.map(async (run) => {
+        try {
+          const data = await fetchJson("/v0/runs/" + encodeURIComponent(run.run_id) + "/diagnostics");
+          const first = Array.isArray(data.diagnostics) ? data.diagnostics[0] : null;
+          if (first) state.diagnosticsByRunId.set(run.run_id, first);
+        } catch (_) {
+          state.diagnosticsByRunId.delete(run.run_id);
+        }
+      });
+      await Promise.all(diagPromises);
+
+      if (!state.selectedRunId && state.runs.length > 0) {
+        state.selectedRunId = state.runs[0].run_id;
+      } else if (state.selectedRunId) {
+        const stillExists = state.runs.some((r) => r.run_id === state.selectedRunId);
+        if (!stillExists) state.selectedRunId = state.runs.length > 0 ? state.runs[0].run_id : null;
+      }
+    }
+
+    function renderRunList() {
+      runListEl.innerHTML = "";
+      for (const run of state.runs) {
+        const item = document.createElement("li");
+        item.className = "run-item" + (run.run_id === state.selectedRunId ? " active" : "");
+        item.addEventListener("click", async () => {
+          state.selectedRunId = run.run_id;
+          renderRunList();
+          await renderSelectedRun();
+        });
+
+        const diag = state.diagnosticsByRunId.get(run.run_id);
+        const severity = diag ? diag.severity : "unknown";
+        const signals = (diag && diag.supporting_signals) || {};
+        const reason = (diag && Array.isArray(diag.reasons) && diag.reasons.length > 0) ? diag.reasons[0] : "no notable reason";
+        const totalTokens = Number(signals.total_tokens || 0);
+        item.innerHTML = [
+          '<div class="run-id">' + shortRunId(run.run_id) + "</div>",
+          '<div><span class="badge ' + severityClass(severity) + '">' + severity + "</span></div>",
+          '<div class="muted" style="margin-top:6px">tokens: ' + formatNumber(totalTokens) + " | " + reason + "</div>",
+          '<div class="meta">',
+          "<div>status: " + run.status + "</div>",
+          "<div>duration: " + run.duration_ms + " ms</div>",
+          "<div>spans: " + run.span_count + "</div>",
+          "<div>errors: " + run.error_count + "</div>",
+          "</div>",
+        ].join("");
+
+        runListEl.appendChild(item);
+      }
+    }
+
+    function renderSignals(signals) {
+      const rows = [
+        ["span_count", signals.span_count],
+        ["non_retry_span_count", signals.non_retry_span_count],
+        ["retry_span_count", signals.retry_span_count],
+        ["error_count", signals.error_count],
+        ["usage_count", signals.usage_count],
+        ["unique_successful_step_count", signals.unique_successful_step_count],
+        ["repeated_successful_step_count", signals.repeated_successful_step_count],
+        ["repeated_span_ratio", Number(signals.repeated_span_ratio || 0).toFixed(3)],
+        ["retry_ratio", Number(signals.retry_ratio || 0).toFixed(3)],
+        ["duration_ms", signals.duration_ms],
+        ["total_tokens", signals.total_tokens],
+        ["total_cost_usd", Number(signals.total_cost_usd || 0).toFixed(6)],
+      ];
+      signalGridEl.innerHTML = rows.map(([k, v]) => (
+        '<div class="signal"><strong>' + k + '</strong><br/>' + v + "</div>"
+      )).join("");
+    }
+
+    function renderUsage(trace) {
+      const spansById = new Map((trace.spans || []).map((s) => [s.span_id, s]));
+      const usage = (trace.usage || []).slice().sort((a, b) => (b.total_tokens || 0) - (a.total_tokens || 0));
+      const total = usage.reduce((sum, u) => sum + Number(u.total_tokens || 0), 0);
+      usageRowsEl.innerHTML = "";
+      if (usage.length === 0) {
+        usageRowsEl.innerHTML = '<tr><td colspan="5" class="muted">No usage records for this run.</td></tr>';
+        return;
+      }
+      for (const u of usage) {
+        const span = spansById.get(u.span_id);
+        const share = total > 0 ? ((Number(u.total_tokens || 0) / total) * 100).toFixed(1) : "0.0";
+        const tr = document.createElement("tr");
+        tr.innerHTML = [
+          "<td>" + (span && span.name ? span.name : u.span_id) + "</td>",
+          "<td>" + formatNumber(u.prompt_tokens) + "</td>",
+          "<td>" + formatNumber(u.completion_tokens) + "</td>",
+          "<td>" + formatNumber(u.total_tokens) + "</td>",
+          "<td>" + share + "%</td>",
+        ].join("");
+        usageRowsEl.appendChild(tr);
+      }
+    }
+
+    function renderSpans(trace) {
+      spanRowsEl.innerHTML = "";
+      for (const span of trace.spans || []) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = [
+          "<td>" + (span.name || "") + "</td>",
+          "<td>" + (span.kind || "") + "</td>",
+          "<td>" + (span.status || "") + "</td>",
+          "<td>" + (span.duration_ms || 0) + " ms</td>",
+        ].join("");
+        spanRowsEl.appendChild(tr);
+      }
+    }
+
+    async function renderSelectedRun() {
+      if (!state.selectedRunId) {
+        runPanelEl.style.display = "none";
+        emptyStateEl.style.display = "block";
+        return;
+      }
+
+      const runId = state.selectedRunId;
+      const [detail, diagResp] = await Promise.all([
+        fetchJson("/v0/runs/" + encodeURIComponent(runId)),
+        fetchJson("/v0/runs/" + encodeURIComponent(runId) + "/diagnostics"),
+      ]);
+
+      state.runDetailsByRunId.set(runId, detail);
+      const diagnostic = (diagResp.diagnostics && diagResp.diagnostics[0]) || null;
+
+      emptyStateEl.style.display = "none";
+      runPanelEl.style.display = "block";
+      runTitleEl.textContent = "Run " + runId;
+
+      const status = detail.trace && detail.trace.run ? detail.trace.run.status : "unknown";
+      const duration = detail.trace && detail.trace.run ? detail.trace.run.duration_ms : 0;
+      runSummaryEl.textContent = "status: " + status + " | duration: " + duration + " ms | ingested_at: " + detail.meta.ingested_at;
+
+      if (diagnostic) {
+        diagnosticHeaderEl.innerHTML = [
+          '<span class="badge ' + severityClass(diagnostic.severity) + '">' + diagnostic.severity + "</span>",
+          '<p style="margin-top:8px">' + diagnostic.summary + "</p>",
+          '<p class="muted" style="margin-top:6px">' + severityMeaning(diagnostic.severity) + "</p>",
+        ].join("");
+
+        reasonListEl.innerHTML = (diagnostic.reasons || [])
+          .map((r) => "<li>" + r + "</li>")
+          .join("");
+        renderSignals(diagnostic.supporting_signals || {});
+        renderMetricStrip(diagnostic);
+        renderImpactFlags(buildImpactFlags(diagnostic, detail));
+      } else {
+        diagnosticHeaderEl.innerHTML = '<span class="badge severity-unknown">unavailable</span>';
+        reasonListEl.innerHTML = "<li>Diagnostic unavailable for this run.</li>";
+        signalGridEl.innerHTML = "";
+        metricStripEl.innerHTML = "";
+        renderImpactFlags([{ text: "diagnostic unavailable", level: "warn" }]);
+      }
+
+      renderSpans(detail.trace || {});
+      renderUsage(detail.trace || {});
+      rawJsonEl.textContent = JSON.stringify({
+        run: detail,
+        diagnostics: diagResp.diagnostics || [],
+      }, null, 2);
+    }
+
+    function setPolling(enabled) {
+      state.polling = enabled;
+      toggleLiveBtn.textContent = enabled ? "Pause Live" : "Resume Live";
+      liveStatusEl.textContent = enabled ? "Polling every 2.5s" : "Polling paused";
+
+      if (state.timerId) {
+        clearInterval(state.timerId);
+        state.timerId = null;
+      }
+      if (enabled) {
+        state.timerId = setInterval(async () => {
+          try {
+            await refreshAll();
+          } catch (_) {
+            liveStatusEl.textContent = "Polling error (see devtools)";
+          }
+        }, state.pollMs);
+      }
+    }
+
+    async function refreshAll() {
+      await loadRuns();
+      renderRunList();
+      await renderSelectedRun();
+    }
+
+    toggleJsonBtn.addEventListener("click", () => {
+      const isVisible = rawJsonEl.style.display === "block";
+      rawJsonEl.style.display = isVisible ? "none" : "block";
+      toggleJsonBtn.textContent = isVisible ? "Show Raw JSON" : "Hide Raw JSON";
+    });
+
+    toggleLiveBtn.addEventListener("click", () => {
+      setPolling(!state.polling);
+    });
+
+    refreshBtn.addEventListener("click", async () => {
+      await refreshAll();
+    });
+
+    (async () => {
+      await refreshAll();
+      setPolling(true);
+    })().catch((err) => {
+      liveStatusEl.textContent = "load failed";
+      console.error(err);
+    });
+  </script>
+</body>
+</html>

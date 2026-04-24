@@ -188,3 +188,62 @@ async fn duplicate_entity_different_payload_across_batches_is_entity_conflict() 
     let json = response_json(second).await;
     assert_eq!(json["code"], "ENTITY_CONFLICT");
 }
+
+#[tokio::test]
+async fn viewer_route_serves_html_page() {
+    let state = AppState::in_memory();
+    let router = app(state);
+    let resp = router
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/viewer")
+                .body(Body::empty())
+                .expect("request"),
+        )
+        .await
+        .expect("viewer response");
+    assert_eq!(resp.status(), StatusCode::OK);
+    let bytes = to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .expect("read body");
+    let html = String::from_utf8(bytes.to_vec()).expect("utf8 html");
+    assert!(html.contains("AgenticHound Trace"));
+    assert!(html.contains("Local Runtime Diagnostics"));
+}
+
+#[tokio::test]
+async fn run_diagnostics_endpoint_returns_progress_collapse_output() {
+    let state = AppState::in_memory();
+    let router = app(state);
+    let body = fixture("ingest-pcd.json");
+
+    let ingest = router
+        .clone()
+        .oneshot(json_request("POST", "/v0/ingest", body))
+        .await
+        .expect("ingest");
+    assert_eq!(ingest.status(), StatusCode::CREATED);
+
+    let diagnostics = router
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/v0/runs/run_pcd_1/diagnostics")
+                .body(Body::empty())
+                .expect("request"),
+        )
+        .await
+        .expect("diagnostics");
+    assert_eq!(diagnostics.status(), StatusCode::OK);
+    let json = response_json(diagnostics).await;
+    assert_eq!(json["run_id"], "run_pcd_1");
+    assert_eq!(
+        json["diagnostics"][0]["diagnostic"],
+        "progress_collapse_detector"
+    );
+    assert!(
+        json["diagnostics"][0]["severity"] == "high"
+            || json["diagnostics"][0]["severity"] == "critical"
+    );
+}

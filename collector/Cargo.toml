@@ -6,6 +6,7 @@ license = "Apache-2.0"
 description = "Local collector core for AgenticHound Trace"
 
 [dependencies]
+agentichound-trace = { path = "../sdk/rust" }
 axum = "0.7"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 jsonschema = "0.18"

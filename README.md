@@ -8,19 +8,18 @@ It exists to show where agents lose time, cost, and reliability across model cal
 
 ## Quick Diagnostic Demo
 
-Run a collector, ingest a trace, then diagnose it:
+Start one local service, open a browser, and watch diagnostics appear as runs are ingested:
 
 ```powershell
 cargo run --manifest-path collector/Cargo.toml
+start http://127.0.0.1:3000/viewer
 curl -X POST http://127.0.0.1:3000/v0/ingest -H "Content-Type: application/json" --data-binary "@collector/fixtures/ingest-pcd.json"
-cargo run --manifest-path cli/Cargo.toml --bin agentichound -- diagnose --collector-url http://127.0.0.1:3000 --run-id run_pcd_1
 ```
 
-Example output:
+Optional CLI verification:
 
 ```text
-severity: critical
-summary: Run strongly resembles progress collapse with repeated work and limited progress.
+cargo run --manifest-path cli/Cargo.toml --bin agentichound -- diagnose --collector-url http://127.0.0.1:3000 --run-id run_pcd_1
 ```
 
 Full flow: [docs/quickstart-diagnostics.md](docs/quickstart-diagnostics.md)
@@ -72,6 +71,8 @@ What is stable now:
 - Frozen trace schema v0 (`schemas/trace.schema.json`)
 - Frozen collector contract v0 (`docs/collector-contract.md`)
 - Runnable Rust collector (`POST /v0/ingest`, `GET /v0/runs`, `GET /v0/runs/{run_id}`)
+- Local viewer UI (`GET /` and `GET /viewer`) with near-live polling and pause/resume
+- Local preview diagnostics endpoint (`GET /v0/runs/{run_id}/diagnostics`) using shared SDK scoring logic
 - SQLite local-first persistence with restart durability
 - Contract and persistence test coverage for idempotency/duplicate/conflict behavior
 

@@ -32,6 +32,11 @@ Out of scope:
 
 No other Phase 1 endpoints are part of this contract.
 
+Note:
+
+- Local preview endpoints may exist for operator UX (for example diagnostics/viewer paths).
+- Those preview endpoints are explicitly outside this frozen v0 collector contract unless separately versioned and frozen.
+
 ## Common Conventions
 
 - Timestamps: RFC3339 UTC date-time string

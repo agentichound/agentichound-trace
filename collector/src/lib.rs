@@ -3,15 +3,18 @@ mod storage;
 pub mod types;
 mod validate;
 
+use agentichound_trace::contract_v0::TraceDocument as SdkTraceDocument;
+use agentichound_trace::diagnostics::{diagnose_progress_collapse, ProgressCollapseDiagnostic};
 use axum::body::Bytes;
 use axum::extract::rejection::BytesRejection;
 use axum::extract::{DefaultBodyLimit, Path, Query, State};
 use axum::http::{header, HeaderMap, StatusCode};
-use axum::response::{IntoResponse, Response};
+use axum::response::{Html, IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use normalize::canonical_json;
 use serde::Deserialize;
+use serde::Serialize;
 use serde_json::Value;
 use std::path::{Path as FsPath, PathBuf};
 use std::sync::{Arc, Mutex};
@@ -61,9 +64,12 @@ impl Default for AppState {
 
 pub fn app(state: AppState) -> Router {
     Router::new()
+        .route("/", get(get_viewer))
+        .route("/viewer", get(get_viewer))
         .route("/v0/ingest", post(post_ingest))
         .route("/v0/runs", get(get_runs))
         .route("/v0/runs/:run_id", get(get_run_by_id))
+        .route("/v0/runs/:run_id/diagnostics", get(get_run_diagnostics))
         .layer(DefaultBodyLimit::max(MAX_PAYLOAD_BYTES))
         .with_state(state)
 }
@@ -302,4 +308,59 @@ async fn get_run_by_id(
         ));
     };
     Ok((StatusCode::OK, Json(response)))
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct RunDiagnosticsResponse {
+    run_id: String,
+    diagnostics: Vec<ProgressCollapseDiagnostic>,
+}
+
+fn to_sdk_trace(trace: &types::TraceDocument) -> Result<SdkTraceDocument, ApiError> {
+    let as_value = serde_json::to_value(trace).map_err(|err| {
+        ApiError::new(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "INTERNAL_ERROR",
+            format!("failed to serialize trace for diagnostics: {err}"),
+        )
+    })?;
+    serde_json::from_value(as_value).map_err(|err| {
+        ApiError::new(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "INTERNAL_ERROR",
+            format!("failed to map trace into diagnostics contract: {err}"),
+        )
+    })
+}
+
+async fn get_run_diagnostics(
+    State(state): State<AppState>,
+    Path(run_id): Path<String>,
+) -> Result<impl IntoResponse, ApiError> {
+    let storage = state.storage.lock().map_err(|_| {
+        ApiError::new(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "INTERNAL_ERROR",
+            "store lock poisoned",
+        )
+    })?;
+    let maybe: Option<RunDetailResponse> = storage.get_run(&run_id)?;
+    let Some(run) = maybe else {
+        return Err(ApiError::new(
+            StatusCode::NOT_FOUND,
+            "RUN_NOT_FOUND",
+            "run_id not found",
+        ));
+    };
+    let sdk_trace = to_sdk_trace(&run.trace)?;
+    let diagnostic = diagnose_progress_collapse(&sdk_trace);
+    let response = RunDiagnosticsResponse {
+        run_id: run.meta.run_id,
+        diagnostics: vec![diagnostic],
+    };
+    Ok((StatusCode::OK, Json(response)))
+}
+
+async fn get_viewer() -> impl IntoResponse {
+    Html(include_str!("viewer.html"))
 }

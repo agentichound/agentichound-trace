@@ -54,12 +54,15 @@ If a code change is required:
 Validation sequence (must execute):
 1. Start collector.
 2. Run NYEX traced command with:
-   - NYEX_AGENTICHOUND_TRACE_POC=1
-   - NYEX_AGENTICHOUND_COLLECTOR_URL=http://127.0.0.1:3000
+   - AGENTICHOUND_TRACE=1
+   - AGENTICHOUND_COLLECTOR_URL=http://127.0.0.1:3000
 3. Query /v0/runs.
 4. Capture emitted run_id.
 5. Query /v0/runs/{run_id}.
 6. Confirm trace contains required fields.
+
+Legacy compatibility note:
+- NYEX-prefixed vars (`NYEX_AGENTICHOUND_TRACE`, `NYEX_AGENTICHOUND_COLLECTOR_URL`) are temporary fallback only.
 
 Output format (strict):
 1. Current integration state
